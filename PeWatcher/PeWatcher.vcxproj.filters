@@ -4,10 +4,18 @@
     <Filter Include="utils">
       <UniqueIdentifier>{3a6c010f-2826-40a8-82ba-67982abb624c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="main">
+      <UniqueIdentifier>{8e6da819-9869-4cac-82ac-3790ce220e7c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PeFile.hpp">
       <Filter>utils</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PeWatcher.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
