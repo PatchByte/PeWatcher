@@ -133,6 +133,8 @@ public:
 			ntOffset += parsedPeFile->GetDosHeader()->e_lfanew;
 
 			memcpy((PVOID)ntOffset, ntData, sizeof(*ntData));
+
+			this->GetNtHeaders()->OptionalHeader.ImageBase = (DWM)peFileInMemory;
 		}
 
 #ifdef _DEBUG
@@ -154,15 +156,21 @@ public:
 				memcpy(newCurrentSection, oldCurrentSection, sizeof(IMAGE_SECTION_HEADER));
 
 #ifdef _DEBUG
-				printf("State: Mapping Section %s!\n", newCurrentSection->Name);
+				printf("State: Mapping Section %.*s! Memory Address: %p\n", 8, newCurrentSection->Name, this->GetBaseAddr() + newCurrentSection->VirtualAddress);
 #endif
 
 				if (oldCurrentSection->SizeOfRawData != 0)
 				{
+					
 					memcpy((PVOID)(this->GetBaseAddr() + newCurrentSection->VirtualAddress), (PVOID)(parsedPeFile->GetBaseAddr() + oldCurrentSection->PointerToRawData), oldCurrentSection->SizeOfRawData);
 				}
+
 			}
 		}
+
+#ifdef _DEBUG
+		printf("State: Fixing Imports!\n");
+#endif
 	}
 
 	/*
