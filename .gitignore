@@ -10,6 +10,9 @@
 # Precompiled Headers
 *.gch
 *.pch
+*.ipch
+
+*.db
 
 # Compiled Dynamic libraries
 *.so
@@ -31,4 +34,5 @@
 *.out
 *.app
 
+.vs/
 .vs
