@@ -249,25 +249,15 @@ public:
 								else
 								{
 									auto* pImport = reinterpret_cast<IMAGE_IMPORT_BY_NAME*>(this->GetBaseAddr() + (*pThunkRef));
-									
+
 									*pFuncRef = (ULONG_PTR)imports.Resolve(modResolved->lib, pImport->Name)->dest;
 									printf("\t-- Import Name: %s > %p\n", pImport->Name, *pFuncRef);
 								}
 
-								
+
 							}
-						
-							if (optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size)
-							{
-								auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(this->GetBaseAddr() + optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
-								printf("%p\n", optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
-								auto* pCallback = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(pTLS->AddressOfCallBacks);
-								for (; pCallback && *pCallback; ++pCallback)
-								{
-									printf("C: %p\n", *pCallback);
-									(*pCallback)((PVOID)this->GetBaseAddr(), DLL_PROCESS_ATTACH, nullptr);
-								}
-							}}
+
+						}
 						
 
 						currentLib = &currentLib[1];
