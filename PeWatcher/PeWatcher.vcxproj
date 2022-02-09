@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="PeFile.hpp" />
+    <ClInclude Include="UtilClasses.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PeWatcher.cpp" />

@@ -2,10 +2,21 @@
 #include <Windows.h>
 #include <stdio.h>
 
+#include "UtilClasses.hpp"
+
 #if _WIN64
 typedef DWORD64 DWM;
 #else
 typedef DWORD DWM;
+#endif
+
+#define RELOC_FLAG32(RelInfo) ((RelInfo >> 0x0C) == IMAGE_REL_BASED_HIGHLOW)
+#define RELOC_FLAG64(RelInfo) ((RelInfo >> 0x0C) == IMAGE_REL_BASED_DIR64)
+
+#ifdef _WIN64
+#define RELOC_FLAG RELOC_FLAG64
+#else
+#define RELOC_FLAG RELOC_FLAG32
 #endif
 
 class PeFileParser
@@ -66,6 +77,8 @@ private:
 	size_t peFileImageSize;
 public:
 
+	ImportHolder imports;
+
 	PeMapper_Normal() = default;
 	~PeMapper_Normal() = default;
 
@@ -120,7 +133,7 @@ public:
 #endif
 
 		{
-			memcpy(peFileInMemory, parsedPeFile->GetDosHeader(), sizeof(IMAGE_DOS_HEADER));
+			memcpy((PIMAGE_DOS_HEADER)peFileInMemory, parsedPeFile->GetDosHeader(), sizeof(IMAGE_DOS_HEADER));
 		}
 
 #ifdef _DEBUG
@@ -134,7 +147,7 @@ public:
 
 			memcpy((PVOID)ntOffset, ntData, sizeof(*ntData));
 
-			this->GetNtHeaders()->OptionalHeader.ImageBase = (DWM)peFileInMemory;
+			
 		}
 
 #ifdef _DEBUG
@@ -171,6 +184,101 @@ public:
 #ifdef _DEBUG
 		printf("State: Fixing Imports!\n");
 #endif
+
+		{
+			auto optionalHeader = &this->GetNtHeaders()->OptionalHeader;
+
+			{
+				BYTE* LocationDelta = (BYTE*)(this->GetBaseAddr() - optionalHeader->ImageBase);
+				if (LocationDelta)
+				{
+					if (!optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size)
+						return;
+
+					auto* pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(this->GetBaseAddr() + optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
+					while (pRelocData->VirtualAddress)
+					{
+						UINT AmountOfEntries = (pRelocData->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
+						WORD* pRelativeInfo = reinterpret_cast<WORD*>(pRelocData + 1);
+
+						for (UINT i = 0; i != AmountOfEntries; ++i, ++pRelativeInfo)
+						{
+							if (RELOC_FLAG(*pRelativeInfo))
+							{
+								UINT_PTR* pPatch = reinterpret_cast<UINT_PTR*>(this->GetBaseAddr() + pRelocData->VirtualAddress + ((*pRelativeInfo) & 0xFFF));
+								*pPatch += reinterpret_cast<UINT_PTR>(LocationDelta);
+								printf(".");
+							}
+							else
+							{
+								printf("|");
+							}
+						}
+						pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<BYTE*>(pRelocData) + pRelocData->SizeOfBlock);
+					}
+				}
+				printf("\n");
+			}
+			system("pause");
+			{
+				if (optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size)
+				{
+					PIMAGE_IMPORT_DESCRIPTOR currentLib = (PIMAGE_IMPORT_DESCRIPTOR)(this->GetBaseAddr() + optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
+					while (currentLib->Name)
+					{
+						char* importName = (char*)(this->GetBaseAddr() + currentLib->Name);
+
+						printf("Importing Lib: %s\n", importName);
+						auto modResolved = imports.ImportLib(importName);
+
+						{
+
+							ULONG_PTR* pThunkRef = (ULONG_PTR*)(this->GetBaseAddr() + currentLib->OriginalFirstThunk);
+							ULONG_PTR* pFuncRef = (ULONG_PTR*)(this->GetBaseAddr() + currentLib->FirstThunk);
+
+							if (!pThunkRef)
+								pThunkRef = pFuncRef;
+
+							for (; *pThunkRef; ++pThunkRef, ++pFuncRef)
+							{
+								if (IMAGE_SNAP_BY_ORDINAL(*pThunkRef))
+								{
+									*pFuncRef = (ULONG_PTR)imports.Resolve(modResolved->lib, reinterpret_cast<char*>(*pThunkRef & 0xFFFF))->dest;
+									printf("\t-- Import Oridinal: %s > %p\n", reinterpret_cast<char*>(*pThunkRef & 0xFFFF), *pFuncRef);
+								}
+								else
+								{
+									auto* pImport = reinterpret_cast<IMAGE_IMPORT_BY_NAME*>(this->GetBaseAddr() + (*pThunkRef));
+									
+									*pFuncRef = (ULONG_PTR)imports.Resolve(modResolved->lib, pImport->Name)->dest;
+									printf("\t-- Import Name: %s > %p\n", pImport->Name, *pFuncRef);
+								}
+
+								
+							}
+						
+							if (optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size)
+							{
+								auto* pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(this->GetBaseAddr() + optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+								printf("%p\n", optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+								auto* pCallback = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(pTLS->AddressOfCallBacks);
+								for (; pCallback && *pCallback; ++pCallback)
+								{
+									printf("C: %p\n", *pCallback);
+									(*pCallback)((PVOID)this->GetBaseAddr(), DLL_PROCESS_ATTACH, nullptr);
+								}
+							}}
+						
+
+						currentLib = &currentLib[1];
+					}
+				}
+			}
+
+		}
+
+		
+		this->GetNtHeaders()->OptionalHeader.ImageBase = (DWM)peFileInMemory;
 	}
 
 	/*
@@ -178,6 +286,7 @@ public:
 	*/
 	void Release()
 	{
+		imports.Release();
 		VirtualFree(peFileInMemory, peFileImageSize, MEM_RELEASE);
 	}
 };

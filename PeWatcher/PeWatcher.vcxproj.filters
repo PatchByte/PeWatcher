@@ -12,6 +12,9 @@
     <ClInclude Include="PeFile.hpp">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="UtilClasses.hpp">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PeWatcher.cpp">

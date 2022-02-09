@@ -28,12 +28,21 @@ int main(int argc, char* argv[])
 
 	normalMapper.MapPeFile();
 
-	printf("-- Mapped memory address: %p", normalMapper.GetBaseAddr());
+	printf("-- Mapped memory address: %p\n", normalMapper.GetBaseAddr());
 
 	while (true)
 	{
 		if (GetAsyncKeyState(VK_INSERT) & 1) { break; }
 	}
+
+	printf("Running\n");
+	auto pEntry = normalMapper.GetBaseAddr() + normalMapper.GetNtHeaders()->OptionalHeader.AddressOfEntryPoint;
+
+	
+
+	typedef void(*EntryFuncDef)();
+
+	((EntryFuncDef)pEntry)();
 
 	normalMapper.Release();
 	reader.Release();
