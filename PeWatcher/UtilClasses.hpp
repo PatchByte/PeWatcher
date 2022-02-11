@@ -88,3 +88,17 @@ public:
 		loadedLib.clear();
 	}
 };
+
+// config classes
+
+class Config
+{
+public:
+	struct WindowToggles
+	{
+		bool showFileInformations;
+	} windowToggles;
+
+};
+
+inline Config MainConfig;

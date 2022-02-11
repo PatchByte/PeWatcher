@@ -92,7 +92,7 @@ public:
 #if !_WIN64
 	inline PIMAGE_NT_HEADERS32 GetNtHeaders()
 	{
-		return (PIMAGE_NT_HEADERS32)((DWM)bytePtr + GetDosHeader()->e_lfanew);
+		return (PIMAGE_NT_HEADERS32)((DWM)peFileInMemory + GetDosHeader()->e_lfanew);
 	}
 #else
 	inline PIMAGE_NT_HEADERS64 GetNtHeaders()
@@ -289,13 +289,17 @@ private:
 	FILE* fileStream;
 	char* fileName;
 	size_t fileSize;
+	
 public:
+	bool hasAFile = false;
+
 
 	PeReaderParser() = default;
 	~PeReaderParser() = default;
 
 	void Initialize(char* path)
 	{
+		hasAFile = true;
 		fileName = path;
 		fopen_s(&fileStream, fileName, "rb");
 
@@ -327,5 +331,6 @@ public:
 	void Release()
 	{
 		VirtualFree(fileContent, fileSize, MEM_RELEASE);
+		hasAFile = false;
 	}
 };
