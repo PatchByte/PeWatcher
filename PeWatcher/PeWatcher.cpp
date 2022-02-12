@@ -6,6 +6,9 @@
 
 static PeReaderParser currentParsedFile = PeReaderParser();
 
+// handy macro
+#define DISP_OFFSET(stru, mem,nam, form, val) ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Text("%X", (uint32_t)offsetof(stru, mem)); ImGui::TableNextColumn(); ImGui::Text(nam); ImGui::TableNextColumn(); ImGui::Text(form, val->mem); 
+
 int main()
 {
 	LogInfo("Welcome!");
@@ -48,7 +51,7 @@ int main()
 						if (currentParsedFile.Parse() == true)
 						{
 							LogInfo("Quick Informations:");
-							LogInfo("Virtual Size: 0x%llx", currentParsedFile.GetParser()->GetNtHeaders()->OptionalHeader.SizeOfImage);
+							LogInfo("Virtual Size: 0x%X", currentParsedFile.GetParser()->GetNtHeaders()->OptionalHeader.SizeOfImage);
 							LogInfo("Section Count: %i", currentParsedFile.GetParser()->GetSectionNumbers());
 							for (int idx = 0; idx < currentParsedFile.GetParser()->GetSectionNumbers(); idx++)
 							{
@@ -95,8 +98,7 @@ int main()
 				{
 					static short selectedTab = -1;
 
-#define MAKE_SELECTABLE(name, idx, tabName) if(ImGui::Selectable(name, selectedTab == idx)) { \
-					selectedTab = idx;}
+#define MAKE_SELECTABLE(name, idx, tabName) if(ImGui::Selectable(name, false)) { selectedTab = idx; }
 
 					auto windowSize = ImGui::GetWindowSize();
 					ImGui::BeginChild("##hdrDisplay", ImVec2(windowSize.x / 4, -1));
@@ -155,7 +157,7 @@ int main()
 
 							auto dHead = currentParsedFile.GetParser()->GetDosHeader();
 
-#define DISP_OFFSET(stru, mem,nam, form, val) ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Text("%X", (uint32_t)offsetof(stru, mem)); ImGui::TableNextColumn(); ImGui::Text(nam); ImGui::TableNextColumn(); ImGui::Text(form, val->mem); 
+
 
 							DISP_OFFSET(IMAGE_DOS_HEADER, e_magic, "Magic Number", "%X", dHead);
 							DISP_OFFSET(IMAGE_DOS_HEADER, e_cblp, "Bytes on last page of file", "%X", dHead);
@@ -185,7 +187,132 @@ int main()
 
 					if (ImGui::BeginTabItem("NT Header's"))
 					{
+						ImGui::BeginTabBar("##ntundertabbar");
 
+						if (ImGui::BeginTabItem("FileHeader"))
+						{
+							auto fHead = &currentParsedFile.GetParser()->GetNtHeaders()->FileHeader;
+
+							if (ImGui::BeginTable("##dosheader_table", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_PadOuterX | ImGuiTableFlags_RowBg))
+							{
+
+								ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+								ImGui::TableSetColumnIndex(0);
+								ImGui::Text("Offset");
+								ImGui::TableNextColumn();
+								ImGui::Text("Name");
+								ImGui::TableNextColumn();
+								ImGui::Text("Value");
+
+								{
+									ImGui::TableNextRow();
+									ImGui::TableSetColumnIndex(0); 
+									ImGui::Text("%X", (uint32_t)offsetof(IMAGE_FILE_HEADER, Machine));
+									ImGui::TableNextColumn();
+									ImGui::Text("Target CPU");
+									ImGui::TableNextColumn();
+									ImGui::Text("%X", fHead->Machine);
+									if (auto typeStr = GetMachineTypeString(fHead->Machine))
+									{
+										ImGui::SameLine();
+										ImGui::PushStyleColor(ImGuiCol_Text, ImColor(9, 132, 227).Value);
+										ImGui::Text("(%s)", typeStr);
+										ImGui::PopStyleColor();
+									}
+								}
+
+								DISP_OFFSET(IMAGE_FILE_HEADER, NumberOfSections, "Number of Sections", "%i", fHead);
+								{
+									ImGui::TableNextRow();
+									ImGui::TableSetColumnIndex(0);
+									ImGui::Text("%X", (uint32_t)offsetof(IMAGE_FILE_HEADER, TimeDateStamp));
+									ImGui::TableNextColumn();
+									ImGui::Text("Build Date");
+									ImGui::TableNextColumn();
+									ImGui::Text("%X", fHead->TimeDateStamp);
+									
+									struct tm _tm = {};
+									time_t cvnTime = fHead->TimeDateStamp;
+									localtime_s(&_tm, &cvnTime);
+
+									ImGui::SameLine();
+									ImGui::PushStyleColor(ImGuiCol_Text, ImColor(9, 132, 227).Value);
+									ImGui::Text("(%i:%i:%i)", _tm.tm_hour, _tm.tm_min, _tm.tm_sec);
+									if (ImGui::IsItemHovered())
+									{
+										ImGui::BeginTooltip();
+										ImGui::Text("%i.%i. %i (MM:DD YYYY)", _tm.tm_mon + 1, _tm.tm_mday, 1900 + _tm.tm_year);
+										ImGui::Text("%i:%i:%i", _tm.tm_hour, _tm.tm_min, _tm.tm_sec);
+										ImGui::EndTooltip();
+									}
+									ImGui::PopStyleColor();
+								}
+								DISP_OFFSET(IMAGE_FILE_HEADER, PointerToSymbolTable, "Offset to the COFF symbol table", "%X", fHead);
+								DISP_OFFSET(IMAGE_FILE_HEADER, NumberOfSymbols, "Number of Symbols in COFF Table", "%X", fHead);
+								DISP_OFFSET(IMAGE_FILE_HEADER, SizeOfOptionalHeader, "Size of the Opt. Header", "%X", fHead);
+								DISP_OFFSET(IMAGE_FILE_HEADER, Characteristics, "Attributes of the file", "%X", fHead);
+
+
+								ImGui::EndTable();
+							}
+
+							ImGui::EndTabItem();
+						}
+
+						if (ImGui::BeginTabItem("OptionalHeader"))
+						{
+							auto oHead = &currentParsedFile.GetParser()->GetNtHeaders()->OptionalHeader;
+
+							if (ImGui::BeginTable("##dosheader_table", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_PadOuterX | ImGuiTableFlags_RowBg))
+							{
+
+								ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+								ImGui::TableSetColumnIndex(0);
+								ImGui::Text("Offset");
+								ImGui::TableNextColumn();
+								ImGui::Text("Name");
+								ImGui::TableNextColumn();
+								ImGui::Text("Value");
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, Magic, "Magic of the Header", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, MajorLinkerVersion, "Major version of the linker", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, MinorLinkerVersion, "Minor version of the linker", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SizeOfCode, "Total size of all sections", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SizeOfInitializedData, "Combined Size of all initialized Sections", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SizeOfUninitializedData, "Combined Size of all uninitialized Sections", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, AddressOfEntryPoint, "RVA of the Entry Point", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, BaseOfCode, "RVA of the first byte of code", "%X", oHead);
+#ifndef _WIN64
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, BaseOfData, "(BaseOfData)", "%X", oHead);
+#endif
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, ImageBase, "Preferred Base address in memory", "%p", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SectionAlignment, "The alignment of sections", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, FileAlignment, "The alignment of sections within the PE file", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, MajorOperatingSystemVersion, "Major version number of the required OS", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, MinorOperatingSystemVersion, "Minor version number of the required OS", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, MajorImageVersion, "The major version number of this file", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, MinorImageVersion, "The minor version number of this file", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, MajorSubsystemVersion, "(MajorSubsystemVersion)", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, MinorSubsystemVersion, "(MinorSubsystemVersion)", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, Win32VersionValue, "(Win32VersionValue)", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SizeOfImage, "Toal Size of mapped space in Memory", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SizeOfHeaders, "Combined size of the MS-DOS header", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum, "The checksum of the image", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, Subsystem, "User interface type", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, DllCharacteristics, "Characteristics of the DLL", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SizeOfStackReserve, "(SizeOfStackReserve)", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SizeOfStackCommit, "(SizeOfStackCommit)", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SizeOfHeapReserve, "(SizeOfHeapReserve)", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, SizeOfHeapCommit, "(SizeOfHeapCommit)", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, LoaderFlags, "(LoaderFlags)", "%X", oHead);
+								DISP_OFFSET(IMAGE_OPTIONAL_HEADER, NumberOfRvaAndSizes, "(NumberOfRvaAndSizes)", "%X", oHead);
+
+								ImGui::EndTable();
+							}
+
+							ImGui::EndTabItem();
+						}
+
+						ImGui::EndTabBar();
 						ImGui::EndTabItem();
 					}
 
@@ -283,7 +410,7 @@ int main()
 			ImVec2 windowLogSize = {displaySize.x, 200};
 
 
-			if (ImGui::Begin("##Log", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar))
+			if (ImGui::Begin("##Log", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus))
 			{
 				g_MainLogger.Render(g_MainRender.fontMap[FONT_BAHNSCHRIFT_NORMAL]);
 			}

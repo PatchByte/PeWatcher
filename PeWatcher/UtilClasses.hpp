@@ -102,3 +102,21 @@ public:
 };
 
 inline Config MainConfig;
+
+// Machine Name Util
+
+const char* GetMachineTypeString(WORD machine)
+{
+	const char* type = NULL;
+
+	switch (machine)
+	{
+	case IMAGE_FILE_MACHINE_I386: { type = "Intel 386"; break;  }
+	case IMAGE_FILE_MACHINE_IA64: { type = "Intel 64"; break;  }
+	case IMAGE_FILE_MACHINE_AMD64: { type = "AMD 64"; break;  }
+	default:
+		break;
+	}
+
+	return type;
+}
