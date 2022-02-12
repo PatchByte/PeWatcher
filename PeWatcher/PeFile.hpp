@@ -15,9 +15,15 @@ typedef DWORD DWM;
 
 #ifdef _WIN64
 #define RELOC_FLAG RELOC_FLAG64
+#define MUST_NT_HEADER IMAGE_NT_OPTIONAL_HDR64_MAGIC
+#define NT_ONLY_STR "64 bit"
 #else
 #define RELOC_FLAG RELOC_FLAG32
+#define MUST_NT_HEADER IMAGE_NT_OPTIONAL_HDR32_MAGIC
+#define NT_ONLY_STR "32 bit"
 #endif
+
+
 
 class PeFileParser
 {
@@ -207,19 +213,12 @@ public:
 							{
 								UINT_PTR* pPatch = reinterpret_cast<UINT_PTR*>(this->GetBaseAddr() + pRelocData->VirtualAddress + ((*pRelativeInfo) & 0xFFF));
 								*pPatch += reinterpret_cast<UINT_PTR>(LocationDelta);
-								printf(".");
-							}
-							else
-							{
-								printf("|");
 							}
 						}
 						pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<BYTE*>(pRelocData) + pRelocData->SizeOfBlock);
 					}
 				}
-				printf("\n");
 			}
-			system("pause");
 			{
 				if (optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size)
 				{
@@ -292,6 +291,7 @@ private:
 	
 public:
 	bool hasAFile = false;
+	char* absName = 0;
 
 
 	PeReaderParser() = default;
@@ -301,6 +301,14 @@ public:
 	{
 		hasAFile = true;
 		fileName = path;
+
+		absName = strrchr(path, '\\');
+		if (absName == 0)
+		{
+			absName = strrchr(path, '/');
+		}
+		if (absName != 0) absName++;
+
 		fopen_s(&fileStream, fileName, "rb");
 
 		{
@@ -317,10 +325,15 @@ public:
 		fileStream = 0;
 	}
 
-	void Parse()
+	bool Parse()
 	{
 		parser = PeFileParser();
 		parser.Initialize(fileContent);
+		
+
+		if (parser.GetNtHeaders()->OptionalHeader.Magic != MUST_NT_HEADER) { Release(); return false; }
+
+		return true;
 	}
 
 	PeFileParser* GetParser()

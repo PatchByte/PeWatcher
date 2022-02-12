@@ -16,6 +16,9 @@
     <Filter Include="gui\imgui\backends">
       <UniqueIdentifier>{dcec36af-cd11-4b63-b333-4ee7de225829}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils\log">
+      <UniqueIdentifier>{66d91096-acca-4213-8721-850c6ae5839e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PeFile.hpp">
@@ -53,6 +56,9 @@
     </ClInclude>
     <ClInclude Include="gui\candy.h">
       <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>utils\log</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

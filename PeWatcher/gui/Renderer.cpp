@@ -8,9 +8,9 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 bool Renderer::Initialize()
 {
-    wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"Mapper", NULL };
+    wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"YeeeToolMapper", NULL };
     RegisterClassEx(&wc);
-    hwnd = ::CreateWindow(wc.lpszClassName, (L"PeWatcher - By PatchByte"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
+    hwnd = ::CreateWindow(wc.lpszClassName, (L"PeTool - By PatchByte"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
 
     if (!CreateDeviceD3D(hwnd))
     {
@@ -34,6 +34,21 @@ bool Renderer::Initialize()
     ImGui::GetStyle().AntiAliasedFill = true;
     ImGui::GetStyle().AntiAliasedLines = true;
     ImGui::GetStyle().AntiAliasedLinesUseTex = true;
+
+    // Default Font
+    
+
+    
+    ImFont* defaultFont = NULL;
+    {
+        defaultFont = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Bahnschrift.ttf", 14.f);
+        this->fontMap.emplace(FONT_BAHNSCHRIFT_NORMAL, defaultFont);
+        this->fontMap.emplace(FONT_BAHNSCHRIFT_TINY, io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Bahnschrift.ttf", 12.f));
+        this->fontMap.emplace(FONT_CONSOLAS_NORMAL, io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Consola.ttf", 14.f));
+        this->fontMap.emplace(FONT_CONSOLAS_TINY, io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Consola.ttf", 12.f));
+    }
+
+    ImGui::GetIO().FontDefault = defaultFont;
 
     return true;
 }

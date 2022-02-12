@@ -214,6 +214,7 @@ namespace ImCandy
         style->ChildBorderSize = 1.00f;
         style->PopupBorderSize = 1.00f;
         style->FrameBorderSize = 1.00f;
+
     }
 
 };

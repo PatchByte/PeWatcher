@@ -2,6 +2,8 @@
 #include <Windows.h>
 #include <iostream>
 
+#include <map>
+
 #pragma comment(lib, "d3d11.lib")
 #include <d3d11_1.h>
 
@@ -11,7 +13,7 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-#define clear_color ImColor(59, 67, 87, 255).Value
+#define clear_color ImColor(155,41,72,255).Value
 
 
 inline ID3D11Device* g_pd3dDevice;
@@ -20,6 +22,10 @@ inline IDXGISwapChain* g_pSwapChain;
 inline ID3D11RenderTargetView* g_mainRenderTargetView;
 inline HWND hwnd;
 
+#define FONT_BAHNSCHRIFT_NORMAL 0
+#define FONT_BAHNSCHRIFT_TINY   1
+#define FONT_CONSOLAS_NORMAL 2
+#define FONT_CONSOLAS_TINY 3
 
 class Renderer
 {
@@ -27,9 +33,7 @@ class Renderer
 private:
 	bool running;
 
-
 	WNDCLASSEX wc;
-
 
 public:
 
@@ -103,7 +107,9 @@ public:
         running = false;
     }
     
+public:
 
+    std::map <uint32_t, ImFont*> fontMap;
 };
 
 inline Renderer g_MainRender = Renderer();
