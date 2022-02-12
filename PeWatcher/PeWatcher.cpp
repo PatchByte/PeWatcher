@@ -142,6 +142,43 @@ int main()
 					ImGui::BeginTabBar("##conTabBar");
 					if (ImGui::BeginTabItem("DOS Header's"))
 					{
+						if (ImGui::BeginTable("##dosheader_table", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_PadOuterX | ImGuiTableFlags_RowBg))
+						{
+
+							ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+							ImGui::TableSetColumnIndex(0);
+							ImGui::Text("Offset");
+							ImGui::TableNextColumn();
+							ImGui::Text("Name");
+							ImGui::TableNextColumn();
+							ImGui::Text("Value");
+
+							auto dHead = currentParsedFile.GetParser()->GetDosHeader();
+
+#define DISP_OFFSET(stru, mem,nam, form, val) ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Text("%X", (uint32_t)offsetof(stru, mem)); ImGui::TableNextColumn(); ImGui::Text(nam); ImGui::TableNextColumn(); ImGui::Text(form, val->mem); 
+
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_magic, "Magic Number", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_cblp, "Bytes on last page of file", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_cp, "Pages in file", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_crlc, "Relocations", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_cparhdr, "Size of header in paragraphs", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_minalloc, "Minimum extra paragraphs needed", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_maxalloc, "Maximum extra paragraphs needed", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_ss, "Initial (relative) SS value", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_sp, "Initial SP value", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_csum, "Checksum", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_ip, "Initial IP value", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_cs, "Initial (relative) CS value", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_lfarlc, "File address of relocation table", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_ovno, "Overlay number", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_res, "Reserved words", "", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_oemid, "OEM identifier (for e_oeminfo)", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_oeminfo, "OEM information; e_oemid specific", "%X", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_res2, "Reserved words", "", dHead);
+							DISP_OFFSET(IMAGE_DOS_HEADER, e_lfanew, "File address of new exe header", "%X", dHead);
+
+							ImGui::EndTable();
+						}
 						
 						ImGui::EndTabItem();
 					}
@@ -155,7 +192,7 @@ int main()
 					if (ImGui::BeginTabItem("Section Header's"))
 					{
 						
-						if (ImGui::BeginTable("##section_table", 9, ImGuiTableFlags_Resizable | ImGuiTableFlags_PadOuterX))
+						if (ImGui::BeginTable("##section_table", 9, ImGuiTableFlags_Resizable | ImGuiTableFlags_PadOuterX | ImGuiTableFlags_RowBg))
 						{
 							ImGui::PushFont(g_MainRender.fontMap[FONT_BAHNSCHRIFT_TINY]);
 							ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
@@ -184,8 +221,13 @@ int main()
 							for (int idx = 0; idx < currentParsedFile.GetParser()->GetSectionNumbers(); idx++)
 							{
 								ImGui::TableNextRow();
+								if (ImGui::IsItemHovered())
+								{
+
+								}
 								auto cSection = currentParsedFile.GetParser()->GetSectionHeaderByIndex(idx);
 								ImGui::TableSetColumnIndex(0);
+								ImGui::Selectable("##Section", false, ImGuiSelectableFlags_SpanAllColumns); ImGui::SameLine();
 								ImGui::Text("%.*s", 8, cSection->Name);
 								ImGui::TableNextColumn();
 								ImGui::Text("%X", cSection->PointerToRawData);
@@ -195,6 +237,15 @@ int main()
 								ImGui::Text("%X", cSection->VirtualAddress);
 								ImGui::TableNextColumn();
 								ImGui::Text("%X", cSection->Misc.VirtualSize);
+								ImGui::TableNextColumn();
+								ImGui::Text("%X", cSection->Characteristics);
+								ImGui::TableNextColumn();
+								ImGui::Text("%X", cSection->PointerToRelocations);
+								ImGui::TableNextColumn();
+								ImGui::Text("%X", cSection->NumberOfRelocations);
+								ImGui::TableNextColumn();
+								ImGui::Text("%X", cSection->NumberOfLinenumbers);
+								
 							}
 
 							ImGui::PopFont();
