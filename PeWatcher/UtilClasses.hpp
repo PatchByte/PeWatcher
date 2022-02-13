@@ -25,7 +25,6 @@ struct Imports
 		{
 			free(x);
 		}
-		imports.clear();
 	}
 };
 
@@ -94,10 +93,7 @@ public:
 class Config
 {
 public:
-	struct WindowToggles
-	{
-		bool showFileInformations;
-	} windowToggles;
+	bool hasMapped;
 
 };
 
@@ -120,3 +116,6 @@ const char* GetMachineTypeString(WORD machine)
 
 	return type;
 }
+
+// handy macro
+#define DISP_OFFSET(stru, mem,nam, form, val) ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Text("%X", (uint32_t)offsetof(stru, mem)); if(ImGui::IsItemHovered()) { ImGui::BeginTooltip();ImGui::Text("%s", #mem);ImGui::EndTooltip(); } ImGui::TableNextColumn(); ImGui::Text(nam); ImGui::TableNextColumn(); ImGui::Text(form, val->mem); 

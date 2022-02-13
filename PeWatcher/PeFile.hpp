@@ -127,7 +127,7 @@ public:
 	/*
 		Only maps the pe file into memory *!* it doesnt execute's it!
 	*/
-	void MapPeFile()
+	bool MapPeFile()
 	{
 		DWORD oldProtect = 0;
 
@@ -199,7 +199,7 @@ public:
 				if (LocationDelta)
 				{
 					if (!optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size)
-						return;
+						return false;
 
 					auto* pRelocData = reinterpret_cast<IMAGE_BASE_RELOCATION*>(this->GetBaseAddr() + optionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
 					while (pRelocData->VirtualAddress)
@@ -268,6 +268,8 @@ public:
 
 		
 		this->GetNtHeaders()->OptionalHeader.ImageBase = (DWM)peFileInMemory;
+
+		return true;
 	}
 
 	/*
@@ -276,7 +278,8 @@ public:
 	void Release()
 	{
 		imports.Release();
-		VirtualFree(peFileInMemory, peFileImageSize, MEM_RELEASE);
+		VirtualFree(peFileInMemory, 0, MEM_RELEASE);
+		printf("Released!\n");
 	}
 };
 
@@ -284,6 +287,7 @@ class PeReaderParser
 {
 private:
 	PeFileParser parser;
+	PeMapper_Normal normalMapper;
 	void* fileContent;
 	FILE* fileStream;
 	char* fileName;
@@ -341,9 +345,16 @@ public:
 		return &parser;
 	}
 
+	PeMapper_Normal* GetNormalMapper()
+	{
+		return &normalMapper;
+	}
+
 	void Release()
 	{
-		VirtualFree(fileContent, fileSize, MEM_RELEASE);
+		VirtualFree(fileContent, 0, MEM_RELEASE);
 		hasAFile = false;
 	}
 };
+
+inline PeReaderParser currentParsedFile = PeReaderParser();
