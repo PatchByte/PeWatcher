@@ -6,6 +6,7 @@
 
 #include "modules/BaseModules.hpp"
 #include "modules/PeInfo.hpp"
+#include "modules/CreditsModule.hpp"
 
 int main()
 {

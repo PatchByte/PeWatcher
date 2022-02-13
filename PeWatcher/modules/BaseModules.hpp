@@ -6,13 +6,11 @@
 #include <imgui.h>
 #include "../PeFile.hpp"
 
-#define REGISTER_MODULE(cClass) inline ModuleRegister<cClass> cClass_Register = ModuleRegister<cClass>();
+#define REGISTER_MODULE(cClass) inline ModuleRegister<cClass> REG##cClass = ModuleRegister<cClass>();
 
 class BaseModuleGui
 {
 public:
-	BaseModuleGui() = default;
-	virtual ~BaseModuleGui() = default;
 public:
 	virtual void RenderWindow() {};
 	virtual const char* GetWindowName() { return NULL; };

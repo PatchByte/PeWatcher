@@ -163,9 +163,11 @@
     <ClInclude Include="gui\Renderer.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="modules\BaseModules.hpp" />
+    <ClInclude Include="modules\CreditsModule.hpp" />
     <ClInclude Include="modules\PeInfo.hpp" />
     <ClInclude Include="PeFile.hpp" />
     <ClInclude Include="UtilClasses.hpp" />
+    <ClInclude Include="ZydisManager.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\imgui\backends\imgui_impl_dx11.cpp" />
